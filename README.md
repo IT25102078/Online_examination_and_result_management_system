@@ -84,16 +84,5 @@ This system automates the examination process by allowing:
 3. Admin creates exams  
 4. Examiner adds marks  
 5. Results are published  
-6. Student views results  
+6. Student views results   
 
----
-
-## 👨‍💻 Author
-
-Kalana  
-
----
-
-## 📄 License
-
-Academic Use Only
