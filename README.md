@@ -56,16 +56,7 @@ This system automates the examination process by allowing:
 - results
 - holds
 
----
 
-## 🧠 OOP Concepts Used
-
-- Encapsulation  
-- Inheritance  
-- Polymorphism  
-- Abstraction  
-
----
 
 ## 🖥️ Tech Stack
 
