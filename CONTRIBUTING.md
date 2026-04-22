@@ -124,10 +124,4 @@ git push origin feature/your-feature-name
 * 🧪 Test your code before creating a Pull Request
 * 🔐 Never commit your real database password
 
-Before committing:
 
-```properties
-spring.datasource.password=your_password
-```
-
----
