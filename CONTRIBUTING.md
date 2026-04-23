@@ -18,8 +18,8 @@ cd online-exam-system
 ### 🔄 Switch to Develop Branch
 
 ```bash
-git checkout develop
-git pull origin develop
+git checkout development
+git pull origin development
 ```
 
 ---
@@ -77,8 +77,8 @@ http://localhost:8080
 Always pull the latest changes:
 
 ```bash
-git checkout develop
-git pull origin develop
+git checkout development
+git pull origin development
 ```
 
 ---
@@ -109,7 +109,7 @@ git push origin feature/your-feature-name
 2. Click **Pull Requests → New Pull Request**
 3. Set:
 
-   * Base branch: `develop`
+   * Base branch: `development`
    * Compare branch: your feature branch
 4. Add a clear title and description
 5. Submit the Pull Request
@@ -118,7 +118,7 @@ git push origin feature/your-feature-name
 
 ## ⚠️ Important Rules
 
-* ❌ Never push directly to `main` or `develop`
+* ❌ Never push directly to `main` or `development`
 * ✅ Always use feature branches
 * 🔄 Always pull latest code before coding
 * 🧪 Test your code before creating a Pull Request
