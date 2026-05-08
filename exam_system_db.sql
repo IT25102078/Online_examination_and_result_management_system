@@ -4,8 +4,9 @@ DROP DATABASE IF EXISTS exam_system_db;
 CREATE DATABASE exam_system_db;
 USE exam_system_db;
 
+-- =========================
 -- 1. admins
-
+-- =========================
 CREATE TABLE admins (
     admin_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
@@ -16,12 +17,12 @@ CREATE TABLE admins (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
+-- =========================
 -- 2. students
 -- Component 01: Student Registration & Student Details
 -- Student account is created here. Exam participation approval is handled separately
 -- in exam_registrations.
-
+-- =========================
 CREATE TABLE students (
     student_id INT AUTO_INCREMENT PRIMARY KEY,
     registration_no VARCHAR(50) NOT NULL UNIQUE,
@@ -37,10 +38,10 @@ CREATE TABLE students (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
+-- =========================
 -- 3. examiners
 -- Component 02: Examiner Registration
-
+-- =========================
 CREATE TABLE examiners (
     examiner_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(150) NOT NULL,
@@ -55,10 +56,10 @@ CREATE TABLE examiners (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
+-- =========================
 -- 4. exams
 -- Component 03: Exam Adding
-
+-- =========================
 CREATE TABLE exams (
     exam_id INT AUTO_INCREMENT PRIMARY KEY,
     exam_code VARCHAR(50) NOT NULL UNIQUE,
@@ -78,11 +79,11 @@ CREATE TABLE exams (
         ON DELETE SET NULL
 );
 
-
+-- =========================
 -- 5. exam_registrations
 -- Component 04: Student Exam Registration Approval
 -- Student requests to register for an exam. Admin approves or rejects that exam registration.
-
+-- =========================
 CREATE TABLE exam_registrations (
     registration_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -107,10 +108,10 @@ CREATE TABLE exam_registrations (
         ON DELETE SET NULL
 );
 
-
+-- =========================
 -- 6. examiner_allocations
 -- Admin allocates examiners to exams
-
+-- =========================
 CREATE TABLE examiner_allocations (
     allocation_id INT AUTO_INCREMENT PRIMARY KEY,
     examiner_id INT NOT NULL,
@@ -132,12 +133,12 @@ CREATE TABLE examiner_allocations (
         ON DELETE SET NULL
 );
 
-
+-- =========================
 -- 7. results
--- Component 05: Examiner Adding Results
--- Component 06: Displaying Results
+-- Component 05: Examiner Adding Results, Holding Students & Result Display
 -- Results are linked to student + exam + examiner.
-
+-- Students use these records only for read-only result display.
+-- =========================
 CREATE TABLE results (
     result_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -164,11 +165,11 @@ CREATE TABLE results (
         ON DELETE SET NULL
 );
 
-
+-- =========================
 -- 8. holds
 -- Component 05: Holding Students
 -- Examiner can hold a student for an exam issue. Admin/examiner can release later.
-
+-- =========================
 CREATE TABLE holds (
     hold_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -192,9 +193,52 @@ CREATE TABLE holds (
         ON DELETE SET NULL
 );
 
+-- =========================
+-- 9. recheck_requests
+-- Component 06: Recheck Request Management
+-- Students submit result recheck requests after viewing results.
+-- Admins or examiners review requests and update the request status.
+-- =========================
+CREATE TABLE recheck_requests (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    exam_id INT NOT NULL,
+    result_id INT NOT NULL,
+    request_reason VARCHAR(255) NOT NULL,
+    request_description TEXT NULL,
+    request_status ENUM('PENDING', 'APPROVED', 'REJECTED', 'REVIEWED') NOT NULL DEFAULT 'PENDING',
+    submitted_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by_examiner INT NULL,
+    reviewed_by_admin INT NULL,
+    reviewed_date DATETIME NULL,
+    review_comment VARCHAR(255) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_recheck_requests_student_result UNIQUE (student_id, result_id),
+    CONSTRAINT fk_recheck_requests_student
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_recheck_requests_exam
+        FOREIGN KEY (exam_id) REFERENCES exams(exam_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_recheck_requests_result
+        FOREIGN KEY (result_id) REFERENCES results(result_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_recheck_requests_examiner
+        FOREIGN KEY (reviewed_by_examiner) REFERENCES examiners(examiner_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_recheck_requests_admin
+        FOREIGN KEY (reviewed_by_admin) REFERENCES admins(admin_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+);
 
+-- =========================
 -- Helpful indexes
-
+-- =========================
 CREATE INDEX idx_students_email ON students(email);
 CREATE INDEX idx_students_registration_no ON students(registration_no);
 CREATE INDEX idx_students_account_status ON students(account_status);
@@ -207,10 +251,14 @@ CREATE INDEX idx_exam_registrations_student ON exam_registrations(student_id);
 CREATE INDEX idx_exam_registrations_exam ON exam_registrations(exam_id);
 CREATE INDEX idx_results_status ON results(result_status);
 CREATE INDEX idx_holds_status ON holds(hold_status);
+CREATE INDEX idx_recheck_requests_student ON recheck_requests(student_id);
+CREATE INDEX idx_recheck_requests_exam ON recheck_requests(exam_id);
+CREATE INDEX idx_recheck_requests_result ON recheck_requests(result_id);
+CREATE INDEX idx_recheck_requests_status ON recheck_requests(request_status);
 
-
+-- =========================
 -- Sample data
-
+-- =========================
 
 -- Admins
 INSERT INTO admins (full_name, email, username, password, role, created_at) VALUES
@@ -218,7 +266,7 @@ INSERT INTO admins (full_name, email, username, password, role, created_at) VALU
 ('Kamal Silva', 'kamal.admin@example.com', 'kamal_admin', 'admin123', 'ADMIN', '2026-04-20 08:15:00');
 
 -- Students
-INSERT INTO students (registration_no, full_name, email, phone, department, course, year_of_study, student_type, password, account_status, created_at) VALUES
+INSERT INTO students (registration_no, full_name, email, contact_no, department, course, year_of_study, student_type, password, account_status, created_at) VALUES
 ('IT2026001', 'Kasun Jayawardena', 'kasun.student@example.com', '0711111111', 'Computing', 'Information Technology', 1, 'REGULAR', 'student123', 'ACTIVE', '2026-04-20 09:00:00'),
 ('IT2026002', 'Sahan Fernando', 'sahan.student@example.com', '0722222222', 'Computing', 'Software Engineering', 2, 'REGULAR', 'student123', 'ACTIVE', '2026-04-20 09:10:00'),
 ('IT2026003', 'Tharushi Peris', 'tharushi.student@example.com', '0733333333', 'Engineering', 'Computer Systems', 3, 'REPEAT', 'student123', 'HELD', '2026-04-20 09:20:00'),
@@ -261,9 +309,14 @@ INSERT INTO holds (student_id, exam_id, examiner_id, reason, hold_status, hold_d
 (3, 3, 3, 'Suspected cheating during practical examination', 'ACTIVE', '2026-05-20 11:15:00', NULL),
 (2, 1, 1, 'ID verification issue resolved', 'RELEASED', '2026-05-10 09:30:00', '2026-05-10 11:00:00');
 
+-- Recheck requests
+INSERT INTO recheck_requests (student_id, exam_id, result_id, request_reason, request_description, request_status, submitted_date, reviewed_by_examiner, reviewed_by_admin, reviewed_date, review_comment) VALUES
+(1, 2, 2, 'Need mark recheck for OOP final examination', 'I expected higher marks for the practical coding section. Please recheck my answer script.', 'PENDING', '2026-05-18 09:00:00', NULL, NULL, NULL, NULL),
+(2, 2, 3, 'Request to recheck failed result', 'I want to verify the marks because I believe one answer may not have been counted.', 'REVIEWED', '2026-05-18 10:30:00', 2, NULL, '2026-05-19 14:00:00', 'Marks were rechecked and result remains unchanged');
 
+-- =========================
 -- Verify data quickly
-
+-- =========================
 -- SELECT * FROM admins;
 -- SELECT * FROM students;
 -- SELECT * FROM examiners;
@@ -272,3 +325,4 @@ INSERT INTO holds (student_id, exam_id, examiner_id, reason, hold_status, hold_d
 -- SELECT * FROM examiner_allocations;
 -- SELECT * FROM results;
 -- SELECT * FROM holds;
+-- SELECT * FROM recheck_requests;
