@@ -1,63 +1,110 @@
-package com.example.exammanagementsystem.controller;
+package com.exam.exam_system.controller;
 
-import com.example.exammanagementsystem.model.Exam;
-import com.example.exammanagementsystem.repository.ExamRepository;
+import com.exam.exam_system.model.Exam;
+import com.exam.exam_system.service.ExamService;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-
-import java.util.List;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
+@RequestMapping("/admin/exams")
 public class ExamController {
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamService examService;
 
-    // Display the form to add a new exam
+    // LIST all exams
+    @GetMapping
+    public String listExams(@RequestParam(required = false) String search, Model model) {
+        if (search != null && !search.isEmpty()) {
+            model.addAttribute("exams", examService.searchExams(search));
+            model.addAttribute("search", search);
+        } else {
+            model.addAttribute("exams", examService.getAllExams());
+        }
+        model.addAttribute("statuses", Exam.ExamStatus.values());
+        return "exam/exam-list";
+    }
+
+    // SHOW add form
     @GetMapping("/add")
-    public String showAddExamForm() {
-        return "add_exam";
+    public String showAddForm(Model model) {
+        model.addAttribute("exam", new Exam());
+        model.addAttribute("statuses", Exam.ExamStatus.values());
+        return "exam/exam-add";
     }
 
-    // Save the exam details to the database and redirect to the list page
-    @PostMapping("/save")
-    public String saveExam(@ModelAttribute("exam") Exam exam) {
-        examRepository.save(exam);
-        return "redirect:/exams"; // Redirect to the list view after saving
+    // PROCESS add
+    @PostMapping("/add")
+    public String addExam(@Valid @ModelAttribute("exam") Exam exam,
+                          BindingResult result,
+                          Model model,
+                          RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            model.addAttribute("statuses", Exam.ExamStatus.values());
+            return "exam/exam-add";
+        }
+        try {
+            examService.addExam(exam);
+            redirectAttributes.addFlashAttribute("success", "Exam added successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/exams";
     }
 
-    // Fetch all exams from the database and display them in a table
-    @GetMapping("/exams")
-    public String viewExams(Model model) {
-        List<Exam> exams = examRepository.findAll();
-        model.addAttribute("allExams", exams); // Sending the list to JSP
-        return "exam-list"; // This will look for exam-list.jsp
-    }
-
-    // Delete an exam record based on its ID
-    @GetMapping("/delete/{id}")
-    public String deleteExam(@PathVariable Long id) {
-        examRepository.deleteById(id);
-        return "redirect:/exams"; // Redirect back to the list after deletion
-    }
-    // Method to show the Edit form with existing data
+    // SHOW edit form
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        Exam exam = examRepository.findById(id).orElse(null);
-        model.addAttribute("exam", exam);
-        return "edit_exam"; // This will look for edit_exam.jsp
+    public String showEditForm(@PathVariable Integer id, Model model) {
+        model.addAttribute("exam", examService.getExamById(id));
+        model.addAttribute("statuses", Exam.ExamStatus.values());
+        return "exam/exam-edit";
     }
 
-    // Method to handle the update request
-    @PostMapping("/update/{id}")
-    public String updateExam(@PathVariable Long id, @ModelAttribute("exam") Exam exam) {
-        exam.setId(id); // Ensure the ID stays the same so it updates instead of creating new
-        examRepository.save(exam);
-        return "redirect:/exams";
+    // PROCESS edit
+    @PostMapping("/edit/{id}")
+    public String updateExam(@PathVariable Integer id,
+                             @ModelAttribute("exam") Exam exam,
+                             @RequestParam("examDate") String examDate,
+                             @RequestParam("examTime") String examTime,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("adminId") == null)
+            return "redirect:/login";
+        try {
+            exam.setExamDate(java.time.LocalDate.parse(examDate));
+            exam.setExamTime(java.time.LocalTime.parse(examTime));
+            examService.updateExam(id, exam);
+            redirectAttributes.addFlashAttribute("success",
+                    "Exam updated successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/exams";
+    }
+
+    // DELETE
+    @PostMapping("/delete/{id}")
+    public String deleteExam(@PathVariable Integer id,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            examService.deleteExam(id);
+            redirectAttributes.addFlashAttribute("success", "Exam deleted successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/exams";
+    }
+
+    // VIEW single exam
+    @GetMapping("/view/{id}")
+    public String viewExam(@PathVariable Integer id, Model model) {
+        model.addAttribute("exam", examService.getExamById(id));
+        return "exam/exam-view";
     }
 }
