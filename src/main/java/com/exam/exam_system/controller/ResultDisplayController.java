@@ -24,6 +24,6 @@ public class ResultDisplayController {
                 resultDisplayService.getResultViewsForStudent(studentId));
         model.addAttribute("summary",
                 resultDisplayService.getSummaryForStudent(studentId));
-        return "result/student-results";
+        return "result/student-result";
     }
 }
