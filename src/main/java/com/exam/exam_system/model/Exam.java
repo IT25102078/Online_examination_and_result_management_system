@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
+//test commit
 @Entity
 @Table(name = "exams")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
