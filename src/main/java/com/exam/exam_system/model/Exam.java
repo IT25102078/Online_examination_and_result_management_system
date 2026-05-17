@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 //test commit
+//test commit 2
 @Entity
 @Table(name = "exams")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
